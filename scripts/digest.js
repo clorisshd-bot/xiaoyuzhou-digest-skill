@@ -19,7 +19,7 @@ const path = require("path");
 const { spawnSync } = require("child_process");
 
 const fetchJs = path.join(__dirname, "fetch.js");
-const tsRe = /^\[(\d{1,2}):(\d{2})\]\s*(.*)$/;
+const tsRe = /^\[(\d{1,3}):(\d{2})\]\s*(.*)$/;
 
 function fail(msg, code = 1) {
   console.error(JSON.stringify({ ok: false, error: msg }));
@@ -83,7 +83,7 @@ function parseTranscript(text) {
   for (const l of shownotesLines) {
     if (/时间线|timeline/i.test(l)) { timelineOn = true; continue; }
     if (!timelineOn) continue;
-    const tm = l.match(/^(\d{1,2}:\d{2})\s+(.+)$/);
+    const tm = l.match(/^(\d{1,3}:\d{2})\s+(.+)$/);
     if (tm) { outline.push({ ts: tm[1], text: tm[2].trim() }); continue; }
     if (/^[一二三四五六七八九十]+、/.test(l) && l.trim().length < 40) {
       outline.push({ ts: "", text: l.trim() });
