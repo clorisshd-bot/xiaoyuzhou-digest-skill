@@ -1,8 +1,10 @@
-# xiaoyuzhou-text-skill
+# xiaoyuzhou-digest-skill
 
-> 快速提取小宇宙播客的**官方逐字稿**，秒级出稿，无需转录。
+> 快速提取小宇宙播客的**官方逐字稿**，秒级出稿，无需转录；并默认产出**四部分分析报告**（基本信息 / 内容摘要 / 思路总结与逻辑框架 / 原文实录）。
 
 一个给 [WorkBuddy](https://www.workbuddy.cn) 用的 Skill。发一条小宇宙单集链接，直接拿到平台已经生成好的 AI 文稿——带逐句时间戳的 Markdown，不用下音频、不用跑 Whisper、不用等。
+
+> 本项目基于 [youshidizipian/xiaoyuzhou-text-skill](https://github.com/youshidizipian/xiaoyuzhou-text-skill)（MIT License）修改：新增「摘要 + 思路梳理」与四部分分析报告默认模式、`digest.js` 骨架解析脚本，并修复了超长单集（>99 分钟）时间戳漏统的问题。原项目版权归原作者所有，详见 LICENSE。
 
 ## 为什么需要它
 
