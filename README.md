@@ -37,7 +37,7 @@ npm install
 ## 使用
 
 ```bash
-# 带时间戳
+# 带时间戳的【完整逐字稿】（用户明确要全文时）
 node scripts/fetch.js "https://www.xiaoyuzhoufm.com/episode/65846753bf3589e89419056a" --timestamps --out 逐字稿.md
 
 # 纯段落
@@ -45,6 +45,13 @@ node scripts/fetch.js "<单集URL或ID>" --out 逐字稿.md
 
 # 直接输出到终端
 node scripts/fetch.js "<单集URL或ID>" --timestamps
+
+# 【默认推荐】抓稿 + 解析骨架，输出紧凑 JSON，供生成「摘要 + 思路梳理」
+# 完整逐字稿落盘到 --out，JSON 打到 stdout（元信息 + 章节骨架，不把数万字读进上下文）
+node scripts/digest.js "<单集URL或ID>" --out 逐字稿.md --json
+
+# 已有逐字稿文件时，只做解析（不联网）
+node scripts/digest.js --file 逐字稿.md --json
 ```
 
 输出长这样：
@@ -65,6 +72,18 @@ node scripts/fetch.js "<单集URL或ID>" --timestamps
 [00:00] 大家好，欢迎来到搞钱女孩……
 [00:12] 今天我们聊一个特别实在的话题……
 ```
+
+## 摘要 + 思路梳理（默认行为）
+
+发一条单集链接，**默认不再直接甩几百行全文**，而是先产出浓缩版：
+
+1. `digest.js` 抓取逐字稿存盘，并解析出 `title / podcast / 时长 / tsCount / outline（带时间戳的章节脉络）`，以 JSON 打到 stdout。
+2. 基于这段 JSON 生成：**一句话摘要 → 核心要点（带时间戳）→ 思路梳理（层级脉络 + 每点结论）→ 适合谁听 / 关键词**。
+3. 完整逐字稿已存盘，用户要「全文 / 某段 / 某时间戳附近」时再按需给出。
+
+> 为什么这样设计：超长单集可达数万字、数百条时间戳，全量塞进对话上下文既费 token 又淹没有价值信息。骨架 JSON 通常只有几 KB，足够撑起一份高质量的摘要与思路梳理。
+
+注意：**不是每集都有官方文稿**——若 `hasTranscript:false`，这集平台未生成 AI 稿，`outline` 可能只来自 Shownotes 小标题，此时摘要应明确标注「无逐句时间戳」。
 
 ## 登录
 

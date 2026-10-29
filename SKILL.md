@@ -1,6 +1,6 @@
 ---
 name: xiaoyuzhou-text-skill
-description: 从小宇宙单集**快速提取平台官方逐字稿**（不是本地语音转文字），带逐句时间戳输出 Markdown，秒级出稿、无需下载音频、无需 ASR。当用户发来小宇宙单集链接，或要求「小宇宙的原生逐字稿 / 官方文字稿 / 不做转录的文稿」时使用。触发词：小宇宙逐字稿、小宇宙文字稿、提取小宇宙文稿、播客官方文稿、免转录、xiaoyuzhou transcript。
+description: 从小宇宙单集**快速提取平台官方逐字稿**（非本地语音转文字），并默认产出**摘要 + 思路梳理**（浓缩版），完整带时间戳逐字稿按需给出。当用户发来小宇宙单集链接，或要求「小宇宙逐字稿 / 文字稿 / 官方文稿 / 摘要 / 概要 / 思路梳理 / 这集讲什么 / 总结一下 / 做笔记」时使用。触发词：小宇宙逐字稿、小宇宙文字稿、提取小宇宙文稿、播客官方文稿、免转录、小宇宙摘要、思路梳理、这集讲什么、xiaoyuzhou transcript。
 ---
 
 # 小宇宙官方逐字稿提取
@@ -22,6 +22,49 @@ description: 从小宇宙单集**快速提取平台官方逐字稿**（不是本
 
 **不要**在本技能里跑 Whisper / faster-whisper —— 那是另一条路，出稿质量不同。
 
+## 默认产出：摘要 + 思路梳理（完整逐字稿按需给）
+
+用户发来单集链接时，**先判断意图**，默认不要直接把几百行带时间戳全文甩给对方：
+
+- 若用户明确要「逐字稿 / 全文 / 完整文字稿」→ 走下方「抓取」直接给全文。
+- 否则（要摘要、概要、思路、笔记，或只发了链接没说要全文）→ 走下面「摘要模式」。
+
+### 摘要模式（默认）
+
+先抓到本地文件并拿到紧凑 JSON 骨架，再基于骨架生成浓缩版，避免把数万字全文读进上下文。
+
+```bash
+# 1) 抓取并解析：完整逐字稿落盘 + 向 stdout 打印紧凑 JSON（元信息 + 章节骨架）
+node ~/.workbuddy/skills/xiaoyuzhou-text-skill/scripts/digest.js \
+  "<单集URL或ID>" --out "<工作区>/逐字稿_<episodeId>.md" --json
+```
+
+`digest.js` 会调用 fetch 抓稿存盘，并输出一段 JSON：
+`{ title, podcast, publishedAt, duration, tsCount, firstTs, lastTs, wordCount, outline:[{ts,text}], transcriptFile, hasTranscript }`。
+**只读这段 JSON 进上下文**，不要为了做摘要把整篇逐字稿读进来（超长单集可达数万字）。
+
+2) 基于 JSON 生成下面四块，**不要**粘贴全文：
+
+- **一句话摘要**：这集在聊什么、核心结论是什么（1–2 句）。
+- **核心要点**：3–7 条，每条可带时间戳（如 `[08:21]`），取自 `outline`。
+- **思路梳理**：用 `outline` 的层级搭出脉络——`一/二/三` 小节作一级，其下 `MM:SS 话题` 作二级；每条补一句「这点在讲什么 / 结论是什么」。这是本技能最有价值的部分，务必展开。
+- **适合谁听 / 关键词**：可选，2–4 行。
+
+3) 收尾提示用户：
+
+> 完整带时间戳逐字稿已存到 `<transcriptFile>`（共 N 条时间戳、约 M 字）。需要某一段、某时间戳附近的内容，或要全文 Markdown，说一声就发你。
+
+### 无官方文稿时
+
+若 `hasTranscript:false`（或 `tsCount:0`）：这集平台没生成 AI 文稿。此时仍可基于 `outline`（往往来自 Shownotes 的小标题）给概要，但必须明确告诉用户「该集无官方逐字稿，以下仅基于 Shownotes，没有逐句时间戳」。
+
+### 按需给全文
+
+用户说要全文 / 逐字稿时：
+
+- 已抓过：直接用 `present_files` 展示 `<transcriptFile>`。
+- 没抓过：执行下方「抓取」里的 `fetch.js --timestamps --out ...` 再展示。
+
 ## 安装
 
 ```bash
@@ -34,7 +77,9 @@ npm install
 
 需要 Node 20+。依赖两个包：`xyz-text`（抓取实现，MIT）与 `qrcode`（把登录链接渲染成二维码）。
 
-## 抓取
+## 抓取（完整逐字稿，按需使用）
+
+默认走「摘要模式」即可；只有用户明确要全文时才用这里。
 
 ```bash
 node ~/.workbuddy/skills/xiaoyuzhou-text-skill/scripts/fetch.js \
@@ -44,6 +89,7 @@ node ~/.workbuddy/skills/xiaoyuzhou-text-skill/scripts/fetch.js \
 - 加 `--timestamps` 每句前带 `[分:秒]`；不加则是纯段落。
 - 不给 `--out` 会输出到 stdout。
 - 输出结构：标题 → 播客名/发布日期/时长/原始链接 → Shownotes → 官方文稿正文。
+- 抓完用 `present_files` 把 `<输出.md>` 展示给用户。
 
 ## 登录（仅在无凭证或凭证过期时）
 
